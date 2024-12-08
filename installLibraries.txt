@@ -1,0 +1,5 @@
+npm install @react-navigation/native
+npm install @react-navigation/native-stack
+npx expo install expo-linear-gradient
+npm install react-native-vector-icons
+npm install react-native-progress
