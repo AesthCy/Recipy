@@ -19,6 +19,8 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
       - name: Install dependencies
-        run: npm ci
+        run: npm install
+      - name: Install eas cli
+        run: npm install -g eas-cli
       - name: Build on EAS
         run: eas build --platform android --non-interactive --no-wait
