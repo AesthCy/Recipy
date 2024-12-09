@@ -1,17 +1,17 @@
 {
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal"
-    },
-    "preview": {
-      "distribution": "internal"
-    },
-    "production": {},
-    "androidapk":{
-      "android":{
-        "buildType": "apk"
+    "build": {
+      "development": {
+        "developmentClient": true,
+        "distribution": "internal"
+      },
+      "preview": {
+        "distribution": "internal"
+      },
+      "production": {},
+      "androidapk":{
+        "android":{
+          "buildType": "apk"
+        }
       }
     }
   }
-}
