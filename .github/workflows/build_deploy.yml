@@ -32,6 +32,9 @@ jobs:
       - name: Set Expo token
         run: echo "EXPO_TOKEN=${{ secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
 
+      - name: Configure the project
+        run: eas build:configure
+      
       # Run EAS Build for Android (APK)
       - name: Build with EAS (Android APK)
         run: eas build --platform android --profile androidapk --non-interactive
