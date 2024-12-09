@@ -14,11 +14,11 @@
     "production": {
       "autoIncrement": true
     },
-   "androidapk":{
-    "android":{
-      "buildType": "apk"
+    "androidapk":{
+      "android":{
+        "buildType": "apk"
+      }
     }
-  }
   },
   "submit": {
     "production": {}
