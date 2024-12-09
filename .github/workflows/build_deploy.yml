@@ -1,10 +1,7 @@
-name: React Native Android
+name: Build and Deploy with EAS
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
     branches:
       - main
 
@@ -13,49 +10,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      # Step to checkout the code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
+      # Step to set up Node.js for the project
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
 
-    - name: Install dependencies
-      run: |
-        npm install
+      # Step to install dependencies
+      - name: Install dependencies
+        run: npm install
 
-    - name: Set up Android SDK
-      run: |
-        sudo apt-get update -y
-        sudo apt-get install -y openjdk-11-jdk
-        export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-        echo "JAVA_HOME=${JAVA_HOME}" >> $GITHUB_ENV
-        sudo apt-get install -y android-sdk
-        sudo apt-get install -y gradle
+      # Step to install EAS CLI
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
 
-    - name: Build Android APK
-      run: |
-        cd android
-        ./gradlew assembleRelease
+      # Set Expo token from GitHub Secrets to environment variable
+      - name: Set Expo token
+        run: echo "EXPO_TOKEN=${{ secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
 
-    # - name: Build iOS app (optional)
-    #   if: runner.os == 'macOS' # Hanya dijalankan di macOS
-    #   run: |
-    #     cd ios
-    #     pod install
-    #     xcodebuild -scheme YourAppName archive -archivePath $PWD/build/YourApp.xcarchive
-    #     xcodebuild -exportArchive -archivePath $PWD/build/YourApp.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath $PWD/build
+      # Run EAS Build for Android (APK)
+      - name: Build with EAS (Android APK)
+        run: eas build --platform android --profile androidapk --non-interactive
 
-    - name: Upload APK (optional)
-      uses: actions/upload-artifact@v3
-      with:
-        name: react-native-apk
-        path: android/app/build/outputs/apk/release/app-release.apk
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      # Upload the build artifact (APK)
+      - name: Upload Android APK build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-apk
+          path: build/android/*.apk
