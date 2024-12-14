@@ -32,10 +32,6 @@ jobs:
       - name: Install Expo CLI
         run: npm install -g expo-cli
 
-      # Step 5: Login to Expo
-      - name: Login to Expo
-        run: expo login --access-token ${{ secrets.EXPO_TOKEN }}
-
       # Step 6: Build Android APK
       - name: Build Android APK
         run: npx expo build:android --no-wait
