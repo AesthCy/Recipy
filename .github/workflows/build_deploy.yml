@@ -36,9 +36,13 @@ jobs:
       - name: Build with EAS (Android APK)
         run: eas build --platform android --profile androidapk --non-interactive
 
-      # Upload the downloaded APK
+      # Rename APK with a timestamp or commit hash for uniqueness
+      - name: Rename APK with timestamp
+        run: mv build/android/*.apk build/android/recipy-$(date +%Y%m%d%H%M%S).apk
+
+      # Upload the renamed APK as a build artifact
       - name: Upload Android APK build artifact
         uses: actions/upload-artifact@v3
         with:
           name: android-apk
-          path: build/android/*.apk
+          path: build/android/recipy-*.apk
