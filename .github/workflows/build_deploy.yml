@@ -3,7 +3,7 @@ name: CI/CD for React Native with Expo
 on:
   push:
     branches:
-      - main # Jalankan hanya pada branch `main`
+      - main
   pull_request:
     branches:
       - main
@@ -24,31 +24,35 @@ jobs:
         with:
           node-version: 20.17.0
 
-      # Step 3: Install dependencies
+      # Step 3: Install Dependencies
       - name: Install Dependencies
         run: npm install
 
-      # Step 4: Login to Expo
-      - name: Login to Expo
-        run: npx expo login --token ${{ secrets.EXPO_TOKEN }}
+      # Step 4: Install Expo CLI
+      - name: Install Expo CLI
+        run: npm install -g expo-cli
 
-      # Step 5: Build Android APK
+      # Step 5: Login to Expo
+      - name: Login to Expo
+        run: expo login --access-token ${{ secrets.EXPO_TOKEN }}
+
+      # Step 6: Build Android APK
       - name: Build Android APK
         run: npx expo build:android --no-wait
 
-      # Step 6: Wait for Build to Complete
+      # Step 7: Wait for Build to Complete
       - name: Wait for Build to Complete
         run: |
           npx expo build:status --platform android > build-status.json
           cat build-status.json
 
-      # Step 7: Download APK
+      # Step 8: Download APK
       - name: Download APK
         run: |
           BUILD_URL=$(jq -r '.artifacts[0].url' build-status.json)
           curl -o android.apk "$BUILD_URL"
 
-      # Step 8: Upload APK to Repository
+      # Step 9: Upload APK to Repository
       - name: Upload APK to Build Folder
         run: |
           mkdir -p build/android
