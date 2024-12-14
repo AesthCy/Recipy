@@ -36,16 +36,9 @@ jobs:
       - name: Build with EAS (Android APK)
         run: eas build --platform android --profile androidapk --non-interactive
 
-      # Download APK from EAS
-      - name: Download APK
-        run: |
-          eas build:list --platform android --status finished --limit 1 --json > build-info.json
-          APK_URL=$(jq -r '.[0].artifacts.buildUrl' build-info.json)
-          curl -o android-app.apk "$APK_URL"
-
       # Upload the downloaded APK
       - name: Upload Android APK build artifact
         uses: actions/upload-artifact@v3
         with:
           name: android-apk
-          path: build/android/android-app.apk
+          path: build/android/*.apk
