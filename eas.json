@@ -6,19 +6,15 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "workflow": "managed"
+      "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal",
-      "workflow": "managed"
+      "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true,
-      "workflow": "managed"
+      "autoIncrement": true
     },
     "androidapk": {
-      "workflow": "managed",
       "android": {
         "buildType": "apk"
       }
