@@ -36,21 +36,23 @@ jobs:
       - name: Build with EAS (Android APK)
         run: eas build --platform android --profile androidapk --non-interactive
 
-      # Upload the APK as a build artifact
-      # - name: Upload Android APK build artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: android-apk
-      #     path: build/android/*.apk
-      
+      # Wait for the build to finish and get the APK URL
+      - name: Wait for build to finish and get APK URL
+        run: |
+          # Use EAS API to check build status
+          BUILD_ID=$(eas build:list --status finished --json | jq -r '.[0].id') # Get the build ID of the latest completed build
+          APK_URL=$(eas build:status $BUILD_ID --json | jq -r '.artifacts.buildUrl') # Get the APK download URL
+          echo "APK URL: $APK_URL"
+          curl -o build/android/app.apk $APK_URL # Download APK
+
       # Commit and push build to GitHub
       - name: Commit and push build to GitHub
         run: |
-          git config --global user.name "Your GitHub Username"
-          git config --global user.email "your-email@example.com"
+          git config --global user.name "AesthCy"
+          git config --global user.email "geralddavin93@gmail.com"
           mkdir -p build/android
-          cp build/android/*.apk build/android/
-          git add build/android/*.apk
+          cp build/android/app.apk build/android/
+          git add build/android/app.apk
           git commit -m "Add APK build to build/android/"
           git push origin main
         env:
