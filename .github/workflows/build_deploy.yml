@@ -1,44 +1,60 @@
-name: Build and Deploy with EAS
+name: CI/CD for React Native with Expo
 
 on:
   push:
+    branches:
+      - main # Jalankan hanya pada branch `main`
+  pull_request:
     branches:
       - main
 
 jobs:
   build:
+    name: Build and Deploy Android APK
     runs-on: ubuntu-latest
 
     steps:
-      # Step to checkout the code from the repository
-      - name: Checkout code
+      # Step 1: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Step to set up Node.js for the project
-      - name: Set up Node.js
+      # Step 2: Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: 20.17.0
 
-      # Step to install dependencies
-      - name: Install dependencies
+      # Step 3: Install dependencies
+      - name: Install Dependencies
         run: npm install
 
-      # Step to install EAS CLI
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
+      # Step 4: Login to Expo
+      - name: Login to Expo
+        run: npx expo login --token ${{ secrets.EXPO_TOKEN }}
 
-      # Set Expo token from GitHub Secrets to environment variable
-      - name: Set Expo token
-        run: echo "EXPO_TOKEN=${{ secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
+      # Step 5: Build Android APK
+      - name: Build Android APK
+        run: npx expo build:android --no-wait
 
-      # Run EAS Build for Android (APK)
-      - name: Build with EAS (Android APK)
-        run: eas build --platform android --profile androidapk --non-interactive
+      # Step 6: Wait for Build to Complete
+      - name: Wait for Build to Complete
+        run: |
+          npx expo build:status --platform android > build-status.json
+          cat build-status.json
 
-      # Upload the APK as a build artifact
-      - name: Upload Android APK build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-apk
-          path: build/android/*.apk
+      # Step 7: Download APK
+      - name: Download APK
+        run: |
+          BUILD_URL=$(jq -r '.artifacts[0].url' build-status.json)
+          curl -o android.apk "$BUILD_URL"
+
+      # Step 8: Upload APK to Repository
+      - name: Upload APK to Build Folder
+        run: |
+          mkdir -p build/android
+          mv android.apk build/android/
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add build/android/
+          git commit -m "Deploy Android APK"
+          git push origin main
