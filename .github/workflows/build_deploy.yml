@@ -27,13 +27,13 @@ jobs:
       # Step to install EAS CLI
       - name: Install EAS CLI
         run: npm install -g eas-cli
-        
-      - name: Update EAS
-        run: eas update --auto
 
       # Set Expo token from GitHub Secrets to environment variable
       - name: Set Expo token
         run: echo "EXPO_TOKEN=${{ secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Update EAS
+        run: eas update --auto
 
       # Run EAS Build for Android (APK)
       - name: Build with EAS (Android APK)
