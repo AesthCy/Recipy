@@ -34,7 +34,7 @@ jobs:
 
       # Run EAS Build for Android (APK)
       - name: Build with EAS (Android APK)
-        run: eas build -p android --profile preview
+        run: eas build --platform android --profile androidapk --non-interactive
 
       # Upload the APK as a build artifact
       - name: Upload Android APK build artifact
