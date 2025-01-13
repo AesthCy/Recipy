@@ -5,13 +5,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebaseConfig';
 
 const Login = () => {
   const navigation = useNavigation();
 
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [user, setUser] = useState('');
 
   const handleGoBack = () => {
     navigation.navigate('Welcome');
@@ -21,14 +27,44 @@ const Login = () => {
     navigation.navigate('Signup');
   }
 
-  const handleLogin = () => {
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleLogin = async () => {
+    if (!validateEmail(email)) {
+      setErrorMessage('Please enter a valid email address');
+      return;
+    }
+
+    if (password.length < 8) {
+      setErrorMessage('Password must be at least 8 characters long');
+      return;
+    }
+
     setLoading(true);
+    setErrorMessage('');
     
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('User logged in:', userCredential.user);
+      setUser(userCredential.user)
       setModalVisible(true);
-    }, 2000);
-  }
+    } 
+    
+    catch (error) {
+      console.error('Login failed:', error.message);
+      setErrorMessage('Invalid credentials');
+    } 
+    
+    finally {
+      setLoading(false);
+    }
+  };
+
 
   const handleGoogleLogin = () => {
     setLoadingGoogle(true);
@@ -82,7 +118,9 @@ const Login = () => {
                 placeholder='Email'
                 placeholderTextColor="#A9A9A9"
                 keyboardType='email-address'
-                autoCapitalize='none'>
+                autoCapitalize='none'
+                value={email}
+                onChangeText={(text) => setEmail(text)}>
               </TextInput>
               
               <Text className="w-96 px-1 items-start mt-2">
@@ -93,8 +131,14 @@ const Login = () => {
                 className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl p-4"
                 placeholder='Password'
                 placeholderTextColor="#A9A9A9"
-                secureTextEntry={true}>
+                secureTextEntry={true}
+                value={password}
+                onChangeText={(text) => setPassword(text)}>
               </TextInput>
+
+              {errorMessage ? (
+                <Text className="text-red-500 text-sm mt-2">{errorMessage}</Text>
+              ) : null}
 
               <TouchableOpacity className="my-4 w-96 items-end">
                 <Text>
@@ -158,7 +202,7 @@ const Login = () => {
             <Text className="text-lg font-semibold text-center">
               Login Successful!
             </Text>
-            <TouchableOpacity className="justify-center items-center h-14 mt-4 border-gray-700 bg-gray-700 border-2 rounded-xl p-4" onPress={() => { setModalVisible(false); navigation.navigate('Homepage'); }}>
+            <TouchableOpacity className="justify-center items-center h-14 mt-4 border-gray-700 bg-gray-700 border-2 rounded-xl p-4" onPress={() => { setModalVisible(false); navigation.navigate('Homepage', { user }); }}>
               <Text className="text-white font-bold">
                 Proceed to Homepage
               </Text>

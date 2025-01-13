@@ -5,13 +5,20 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth, database } from '../firebaseConfig';
+import { ref, set } from "firebase/database";
 
 const Signup = () => {
   const navigation = useNavigation();
 
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
-  const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [user, setUser] = useState('');
 
   const handleGoBack = () => {
     navigation.navigate('Welcome');
@@ -21,21 +28,59 @@ const Signup = () => {
     navigation.navigate('Login');
   }
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
+    if (username.trim() === '') {
+      setErrorMessage('Please enter a username');
+      return;
+    }
+    
+    if (!email.includes('@')) {
+      setErrorMessage('Please enter a valid email');
+      return;
+    }
+
+    if (password.length < 8) {
+      setErrorMessage('Password must be at least 8 characters long');
+      return;
+    }
+
     setLoading(true);
-    // Simulasi proses registrasi
-    setTimeout(() => {
+    setErrorMessage('');
+    
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = userCredential.user.uid;
+      
+      const testDatabase = async () => {
+        try {
+          await set(ref(database, "users/" + uid), { username: username, email: email, uid: uid });
+          console.log("Database connection successful");
+        } catch (error) {
+          console.error("Database connection failed:", error.message);
+        }
+      };
+      
+      testDatabase();
+
+      setUser(userCredential.user)
+      setModalVisible(true);
+    } 
+    
+    catch (error) {
+      console.error('Registration failed:', error.message);
+      setErrorMessage(error.message);
+    } 
+    
+    finally {
       setLoading(false);
-      setModalVisible(true); // tampilkan modal ketika registrasi selesai
-    }, 2000);
+    }
   }
 
   const handleGoogleRegister = () => {
-    setLoadingGoogle(true);
-    // Simulasi proses Google login
+    setLoading(true);
     setTimeout(() => {
-      setLoadingGoogle(false);
-      setModalVisible(true); // tampilkan modal ketika login Google selesai
+      setLoading(false);
+      setModalVisible(true);
     }, 2000);
   }
 
@@ -81,10 +126,10 @@ const Signup = () => {
                 className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl p-4"
                 placeholder='Username'
                 placeholderTextColor="#A9A9A9"
-                keyboardType='username'
-                autoCapitalize='none'>
-              </TextInput>
-              
+                value={username}
+                onChangeText={(text) => setUsername(text)}
+              />
+
               <Text className="w-96 px-1 items-start mt-2">
                 Email
               </Text>
@@ -93,9 +138,11 @@ const Signup = () => {
                 className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl p-4"
                 placeholder='Email'
                 placeholderTextColor="#A9A9A9"
-                keyboardType='email'
-                autoCapitalize='none'>
-              </TextInput>
+                keyboardType='email-address'
+                autoCapitalize='none'
+                value={email}
+                onChangeText={(text) => setEmail(text)}
+              />
 
               <Text className="w-96 px-1 items-start mt-2">
                 Password
@@ -105,8 +152,14 @@ const Signup = () => {
                 className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl p-4"
                 placeholder='Password'
                 placeholderTextColor="#A9A9A9"
-                secureTextEntry={true}>
-              </TextInput>
+                secureTextEntry={true}
+                value={password}
+                onChangeText={(text) => setPassword(text)}
+              />
+
+              {errorMessage ? (
+                <Text className="text-red-500 text-sm mt-2">{errorMessage}</Text>
+              ) : null}
 
               <TouchableOpacity className="justify-center items-center w-96 h-14 mt-8 border-gray-700 bg-gray-700 border-2 rounded-xl p-4" onPress={handleRegister}>
                 {loading ? (
@@ -123,7 +176,7 @@ const Signup = () => {
               </Text>
 
               <TouchableOpacity className="flex-row justify-center items-center w-96 h-14 my-2 border-gray-700 border-2 rounded-xl p-4" onPress={handleGoogleRegister}>
-                {loadingGoogle ? (
+                {loading ? (
                   <ActivityIndicator size="small" color="#000" />
                 ) : (
                   <>
@@ -164,7 +217,7 @@ const Signup = () => {
             <Text className="text-lg font-semibold text-center">
               Registration Successful!
             </Text>
-            <TouchableOpacity className="justify-center items-center h-14 mt-4 border-gray-700 bg-gray-700 border-2 rounded-xl p-4" onPress={() => { setModalVisible(false); navigation.navigate('Homepage'); }}>
+            <TouchableOpacity className="justify-center items-center h-14 mt-4 border-gray-700 bg-gray-700 border-2 rounded-xl p-4" onPress={() => { setModalVisible(false); navigation.navigate('Homepage', { user }); }}>
               <Text className="text-white font-bold">
                 Proceed to Homepage
               </Text>

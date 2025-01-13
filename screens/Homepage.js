@@ -1,36 +1,163 @@
 import { View, Text, Image, TextInput, ScrollView, Platform, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import "../global.css";
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { ref, get, update } from "firebase/database";
+import { database } from "../firebaseConfig";
 
 const Homepage = () => {
+  const route = useRoute();
+  const { user } = route.params;
+  const [userData, setUserData] = useState(null); // State to store user data
+  const [recipes, setRecipes] = useState([]); // Simpan data resep
+  const [loading, setLoading] = useState(true); // Loading state
 
   const navigation = useNavigation();
 
-  const handleDetailPizza = () => {
-    navigation.navigate('DetailPizza');
+  useEffect(() => {
+    // Fungsi untuk mengambil data pengguna
+    const fetchUserData = async () => {
+      try {
+        const userRef = ref(database, `users/${user.uid}`);
+        const snapshot = await get(userRef);
+
+        if (snapshot.exists()) {
+          setUserData(snapshot.val());
+        } else {
+          console.log("No data available for this user.");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Fungsi untuk mengambil data resep dan memperbarui status jika diperlukan
+    const fetchRecipes = async () => {
+      try {
+        const recipesRef = ref(database, 'recipes');
+        const snapshot = await get(recipesRef);
+
+        if (snapshot.exists()) {
+          const recipesData = snapshot.val();
+          const updatedRecipes = [];
+
+          for (const [index, recipe] of recipesData.entries()) {
+            if (recipe && recipe.status) {
+              // Periksa apakah status untuk user.uid sudah ada
+              if (!recipe.status[user.uid]) {
+                // Tambahkan status "Not Started" untuk user.uid
+                const recipeStatusRef = ref(database, `recipes/${index}/status`);
+                await update(recipeStatusRef, { [user.uid]: "Not Started" });
+                recipe.status[user.uid] = "Not Started"; // Perbarui lokal
+              }
+            }
+            updatedRecipes.push(recipe);
+          }
+
+          setRecipes(updatedRecipes); // Simpan data resep ke state
+        } else {
+          console.log("No recipes found.");
+        }
+      } catch (error) {
+        console.error("Error fetching recipes:", error.message);
+      }
+    };
+
+    const fetchData = async () => {
+      setLoading(true);
+      await fetchUserData();
+      await fetchRecipes();
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [user.uid]);
+
+  console.log("Recipes data:", recipes);
+
+  const RecipeCard = ({ recipe, onPress }) => {
+    if (!recipe) return null;
+
+    return (
+      <TouchableWithoutFeedback onPress={onPress}>
+        <View className="flex-1 h-80 rounded-3xl mx-2 border-white bg-white">
+          <Image
+            source={{ uri: recipe.source }}
+            style={{
+              width: '100%',
+              borderRadius: 20,
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
+              flex: 1
+            }}
+          />
+    
+          <View className="flex-1 w-full p-2 justify-center">
+            <View className="flex-row justify-start items-center">
+              <Text 
+                className="flex-1 text-xl font-bold mr-2"
+                numberOfLines={1}
+                ellipsizeMode='tail'>
+                {recipe.name}
+              </Text>
+              <TouchableOpacity>
+                <Icon name="heart-outline" size={20} color="#A9A9A9"/>
+              </TouchableOpacity>
+            </View>
+            
+            <Text className="text-xs font-light">
+              {recipe.category}
+            </Text>
+    
+            <View className="flex-row mt-2">
+              <View className="flex-1 flex-row justify-start items-center">
+                <Icon name="alarm" size={16} color="#A9A9A9"/>
+                <Text className="pl-1 text-xs font-light">
+                  {recipe.duration >= 60 
+                    ? `${Math.floor(recipe.duration / 60)} Hour${Math.floor(recipe.duration / 60) > 1 ? 's' : ''} ${recipe.duration % 60 ? `${recipe.duration % 60} Mins` : ''}`
+                    : `${recipe.duration} Mins`
+                  }
+                </Text>
+              </View>
+              <View className="flex-1 flex-row justify-start items-center">
+                <Icon name="person" size={16} color="#A9A9A9"/>
+                <Text className="pl-1 text-xs font-light">
+                  {recipe.serving} Serving(s)
+                </Text>
+              </View>
+            </View>
+    
+            <Text className="text-xs font-light mt-2">
+              {recipe.like} users liked this recipe
+            </Text>
+            
+            <Text className="text-xs font-light">
+              {recipe.recommend} users recommended this recipe
+            </Text>
+    
+            <Text className={`font-bold mt-2 ${
+              recipe.status[user.uid] === "Not Started" ? "text-red-500" :
+              recipe.status[user.uid] === "In Progress" ? "text-yellow-500" :
+              "text-green-500"
+            }`}>
+              {recipe.status[user.uid]}
+            </Text>
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
+    );
   }
 
-  const handleDetailSpaghetti = () => {
-    navigation.navigate('DetailSpaghetti');
-  }
-
-  const handleDetailMasala = () => {
-    navigation.navigate('DetailMasala');
-  }
-
-  const handleDetailKungPao = () => {
-    navigation.navigate('DetailKungPao');
-  }
-
-  const handleDetailPadThai = () => {
-    navigation.navigate('DetailPadThai');
-  }
-
-  const handleDetailRamen = () => {
-    navigation.navigate('DetailRamen');
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text>Loading...</Text>
+      </View>
+    );
   }
 
   return (
@@ -67,7 +194,7 @@ const Homepage = () => {
       </Image>
 
       <Text className="text-black text-2xl font-bold px-2 mb-4 mr-4">
-        Welcome, Gerald!
+        Welcome, {userData.username}
       </Text>
     </View>
 
@@ -153,369 +280,27 @@ const Homepage = () => {
         <Text className="text-black text-lg mt-4 px-2">
           Your Progress
         </Text>
-
-        <View className="flex-row w-full justify-center items-center my-4 mt-2">
-          <TouchableWithoutFeedback onPress={handleDetailPizza}>
-            <View className="flex-1 h-80 rounded-3xl mr-2 border-white bg-white">
-              <Image
-                source={require('../assets/Pizza.jpg')}
-                style={{
-                  width: '100%',
-                  borderRadius: 20,
-                  borderBottomLeftRadius: 0,
-                  borderBottomRightRadius: 0,
-                  flex: 1
-                }}>
-              </Image>
-
-              <View className="flex-1 w-full p-2 justify-center">
-                <View className="flex-row justify-start items-center">
-                  <Text 
-                    className="flex-1 text-xl font-bold mr-2"
-                    numberOfLines={1}
-                    ellipsizeMode='tail'>
-                    Homemade Pizza
-                  </Text>
-                  <TouchableOpacity>
-                    <Icon name="heart-outline" size={20} color="#A9A9A9"/>
-                  </TouchableOpacity>
-                </View>
-                
-                <Text className="text-xs font-light">
-                  Western Food
-                </Text>
-
-                <View className="flex-row mt-2">
-                  <View className="flex-1 flex-row justify-start items-center">
-                    <Icon name="alarm" size={16} color="#A9A9A9"/>
-                    <Text className="pl-1 text-xs font-light">
-                      1 Hour 30 Mins
-                    </Text>
-                  </View>
-                  <View className="flex-1 flex-row justify-start items-center">
-                    <Icon name="person" size={16} color="#A9A9A9"/>
-                    <Text className="pl-1 text-xs font-light">
-                      4 Serving(s)
-                    </Text>
-                  </View>
-                </View>
-
-                <Text className="text-xs font-light mt-2">
-                  9 users liked this recipe
-                </Text>
-                
-                <Text className="text-xs font-light">
-                  15 users recommended this recipe
-                </Text>
-
-                <Text className="text-red-500 font-bold mt-2">
-                  Not Started
-                </Text>
+        
+        {/* Letakkan kode mapping di sini */}
+        {recipes.filter(recipe => recipe !== null).reduce((rows, recipe, index, array) => {
+          if (index % 2 === 0) {
+            rows.push(
+              <View key={index/2} className="flex-row w-full justify-center items-center my-4 mt-2">
+                <RecipeCard 
+                  recipe={recipe}
+                  onPress={() => navigation.navigate(`Detail${recipe.name.replace(/\s+/g, '')}`)}
+                />
+                {array[index + 1] && (
+                  <RecipeCard 
+                    recipe={array[index + 1]}
+                    onPress={() => navigation.navigate(`Detail${array[index + 1].name.replace(/\s+/g, '')}`)}
+                  />
+                )}
               </View>
-            </View>
-          </TouchableWithoutFeedback>
-          <TouchableWithoutFeedback onPress={handleDetailSpaghetti}>
-            <View className="flex-1 h-80 rounded-3xl ml-2 border-white bg-white">
-              <Image
-                source={require('../assets/Caesar Spaghetti.jpg')}
-                style={{
-                  width: '100%',
-                  borderRadius: 20,
-                  borderBottomLeftRadius: 0,
-                  borderBottomRightRadius: 0,
-                  flex: 1
-                }}>
-              </Image>
-
-              <View className="flex-1 w-full p-2 justify-center">
-                <View className="flex-row justify-start items-center">
-                  <Text 
-                    className="flex-1 text-xl font-bold mr-2"
-                    numberOfLines={1}
-                    ellipsizeMode='tail'>
-                    Caesar Spaghetti
-                  </Text>
-                  <TouchableOpacity>
-                    <Icon name="heart-outline" size={20} color="#A9A9A9"/>
-                  </TouchableOpacity>
-                </View>
-                
-                <Text className="text-xs font-light">
-                  Western Food
-                </Text>
-
-                <View className="flex-row mt-2">
-                  <View className="flex-1 flex-row justify-start items-center">
-                    <Icon name="alarm" size={16} color="#A9A9A9"/>
-                    <Text className="pl-1 text-xs font-light">
-                      30 Mins
-                    </Text>
-                  </View>
-                  <View className="flex-1 flex-row justify-start items-center">
-                    <Icon name="person" size={16} color="#A9A9A9"/>
-                    <Text className="pl-1 text-xs font-light">
-                      1 Serving
-                    </Text>
-                  </View>
-                </View>
-
-                <Text className="text-xs font-light mt-2">
-                  36 users liked this recipe
-                </Text>
-                
-                <Text className="text-xs font-light">
-                  60 users recommended this recipe
-                </Text>
-
-                <Text className="text-yellow-500 font-bold mt-2">
-                  In Progress
-                </Text>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-
-        <View className="flex-row w-full justify-center items-center my-4 mt-2">
-          <TouchableWithoutFeedback onPress={handleDetailMasala}>
-            <View className="flex-1 h-80 rounded-3xl mr-2 border-white bg-white">
-              <Image
-                source={require('../assets/Tikka Masala.jpg')}
-                style={{
-                  width: '100%',
-                  borderRadius: 20,
-                  borderBottomLeftRadius: 0,
-                  borderBottomRightRadius: 0,
-                  flex: 1
-                }}>
-              </Image>
-
-              <View className="flex-1 w-full p-2 justify-center">
-                <View className="flex-row justify-start items-center">
-                  <Text 
-                    className="flex-1 text-xl font-bold mr-2"
-                    numberOfLines={1}
-                    ellipsizeMode='tail'>
-                    Chicken Tikka Masala
-                  </Text>
-                  <TouchableOpacity>
-                    <Icon name="heart-outline" size={20} color="#A9A9A9"/>
-                  </TouchableOpacity>
-                </View>
-                
-                <Text className="text-xs font-light">
-                  Eastern Food
-                </Text>
-
-                <View className="flex-row mt-2">
-                  <View className="flex-1 flex-row justify-start items-center">
-                    <Icon name="alarm" size={16} color="#A9A9A9"/>
-                    <Text className="pl-1 text-xs font-light">
-                      1 Hour
-                    </Text>
-                  </View>
-                  <View className="flex-1 flex-row justify-start items-center">
-                    <Icon name="person" size={16} color="#A9A9A9"/>
-                    <Text className="pl-1 text-xs font-light">
-                      6-8 Serving(s)
-                    </Text>
-                  </View>
-                </View>
-
-                <Text className="text-xs font-light mt-2">
-                  126 users liked this recipe
-                </Text>
-                
-                <Text className="text-xs font-light">
-                  89 users recommended this recipe
-                </Text>
-
-                <Text className="text-green-500 font-bold mt-2">
-                  Cooked
-                </Text>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-          <TouchableWithoutFeedback onPress={handleDetailKungPao}>
-            <View className="flex-1 h-80 rounded-3xl ml-2 border-white bg-white">
-              <Image
-                source={require('../assets/Kung Pao Chicken.jpg')}
-                style={{
-                  width: '100%',
-                  borderRadius: 20,
-                  borderBottomLeftRadius: 0,
-                  borderBottomRightRadius: 0,
-                  flex: 1
-                }}>
-              </Image>
-
-              <View className="flex-1 w-full p-2 justify-center">
-                <View className="flex-row justify-start items-center">
-                  <Text 
-                    className="flex-1 text-xl font-bold mr-2"
-                    numberOfLines={1}
-                    ellipsizeMode='tail'>
-                    Kung Pao Chicken
-                  </Text>
-                  <TouchableOpacity>
-                    <Icon name="heart-outline" size={20} color="#A9A9A9"/>
-                  </TouchableOpacity>
-                </View>
-                
-                <Text className="text-xs font-light">
-                  Chinese Food
-                </Text>
-
-                <View className="flex-row mt-2">
-                  <View className="flex-1 flex-row justify-start items-center">
-                    <Icon name="alarm" size={16} color="#A9A9A9"/>
-                    <Text className="pl-1 text-xs font-light">
-                      30 Mins
-                    </Text>
-                  </View>
-                  <View className="flex-1 flex-row justify-start items-center">
-                    <Icon name="person" size={16} color="#A9A9A9"/>
-                    <Text className="pl-1 text-xs font-light">
-                      4 Serving(s)
-                    </Text>
-                  </View>
-                </View>
-
-                <Text className="text-xs font-light mt-2">
-                  54 users liked this recipe
-                </Text>
-                
-                <Text className="text-xs font-light">
-                  47 users recommended this recipe
-                </Text>
-
-                <Text className="text-red-500 font-bold mt-2">
-                  Not Started
-                </Text>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-
-        <View className="flex-row w-full justify-center items-center my-4 mt-2">
-          <TouchableWithoutFeedback onPress={handleDetailPadThai}>
-            <View className="flex-1 h-80 rounded-3xl mr-2 border-white bg-white">
-              <Image
-                source={require('../assets/Pad Thai.jpg')}
-                style={{
-                  width: '100%',
-                  borderRadius: 20,
-                  borderBottomLeftRadius: 0,
-                  borderBottomRightRadius: 0,
-                  flex: 1
-                }}>
-              </Image>
-
-              <View className="flex-1 w-full p-2 justify-center">
-                <View className="flex-row justify-start items-center">
-                  <Text 
-                    className="flex-1 text-xl font-bold mr-2"
-                    numberOfLines={1}
-                    ellipsizeMode='tail'>
-                    Pad Thai
-                  </Text>
-                  <TouchableOpacity>
-                    <Icon name="heart-outline" size={20} color="#A9A9A9"/>
-                  </TouchableOpacity>
-                </View>
-                
-                <Text className="text-xs font-light">
-                  Asian Food
-                </Text>
-
-                <View className="flex-row mt-2">
-                  <View className="flex-1 flex-row justify-start items-center">
-                    <Icon name="alarm" size={16} color="#A9A9A9"/>
-                    <Text className="pl-1 text-xs font-light">
-                      30 Mins
-                    </Text>
-                  </View>
-                  <View className="flex-1 flex-row justify-start items-center">
-                    <Icon name="person" size={16} color="#A9A9A9"/>
-                    <Text className="pl-1 text-xs font-light">
-                      4 Serving(s)
-                    </Text>
-                  </View>
-                </View>
-
-                <Text className="text-xs font-light mt-2">
-                  37 users liked this recipe
-                </Text>
-                
-                <Text className="text-xs font-light">
-                  29 users recommended this recipe
-                </Text>
-
-                <Text className="text-yellow-500 font-bold mt-2">
-                  In Progress
-                </Text>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-          <TouchableWithoutFeedback onPress={handleDetailRamen}>
-            <View className="flex-1 h-80 rounded-3xl ml-2 border-white bg-white">
-              <Image
-                source={require('../assets/Tonkotsu Ramen.jpg')}
-                style={{
-                  width: '100%',
-                  borderRadius: 20,
-                  borderBottomLeftRadius: 0,
-                  borderBottomRightRadius: 0,
-                  flex: 1
-                }}>
-              </Image>
-
-              <View className="flex-1 w-full p-2 justify-center">
-                <View className="flex-row justify-start items-center">
-                  <Text 
-                    className="flex-1 text-xl font-bold mr-2"
-                    numberOfLines={1}
-                    ellipsizeMode='tail'>
-                    Tonkotsu Ramen
-                  </Text>
-                  <TouchableOpacity>
-                    <Icon name="heart-outline" size={20} color="#A9A9A9"/>
-                  </TouchableOpacity>
-                </View>
-                
-                <Text className="text-xs font-light">
-                  Japanese Food
-                </Text>
-
-                <View className="flex-row mt-2">
-                  <View className="flex-1 flex-row justify-start items-center">
-                    <Icon name="alarm" size={16} color="#A9A9A9"/>
-                    <Text className="pl-1 text-xs font-light">
-                      12 Hours
-                    </Text>
-                  </View>
-                  <View className="flex-1 flex-row justify-start items-center">
-                    <Icon name="person" size={16} color="#A9A9A9"/>
-                    <Text className="pl-1 text-xs font-light">
-                      8-12 Serving(s)
-                    </Text>
-                  </View>
-                </View>
-
-                <Text className="text-xs font-light mt-2">
-                  328 users liked this recipe
-                </Text>
-                
-                <Text className="text-xs font-light">
-                  257 users recommended this recipe
-                </Text>
-
-                <Text className="text-green-500 font-bold mt-2">
-                  Cooked
-                </Text>
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
+            );
+          }
+          return rows;
+        }, [])}
       </ScrollView>
     </View>
     
