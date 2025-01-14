@@ -77,7 +77,7 @@ const Homepage = () => {
     fetchData();
   }, [user.uid]);
 
-  console.log("Recipes data:", recipes);
+  const validRecipes = recipes.filter(recipe => recipe !== undefined && recipe !== null);
 
   const RecipeCard = ({ recipe, onPress }) => {
     if (!recipe) return null;
@@ -194,7 +194,7 @@ const Homepage = () => {
       </Image>
 
       <Text className="text-black text-2xl font-bold px-2 mb-4 mr-4">
-        Welcome, {userData.username}
+        Welcome, {userData.username}!
       </Text>
     </View>
 
@@ -282,25 +282,22 @@ const Homepage = () => {
         </Text>
         
         {/* Letakkan kode mapping di sini */}
-        {recipes.filter(recipe => recipe !== null).reduce((rows, recipe, index, array) => {
+        {validRecipes.reduce((acc, recipe, index) => {
           if (index % 2 === 0) {
-            rows.push(
-              <View key={index/2} className="flex-row w-full justify-center items-center my-4 mt-2">
-                <RecipeCard 
-                  recipe={recipe}
-                  onPress={() => navigation.navigate(`Detail${recipe.name.replace(/\s+/g, '')}`)}
-                />
-                {array[index + 1] && (
-                  <RecipeCard 
-                    recipe={array[index + 1]}
-                    onPress={() => navigation.navigate(`Detail${array[index + 1].name.replace(/\s+/g, '')}`)}
-                  />
-                )}
-              </View>
-            );
+            acc.push(validRecipes.slice(index, index + 2));
           }
-          return rows;
-        }, [])}
+          return acc;
+        }, []).map((pair, rowIndex) => (
+          <View key={rowIndex} className="flex-row w-full justify-center items-center my-4">
+            {pair.map((recipe, index) => (
+              <RecipeCard
+                key={index}
+                recipe={recipe}
+                onPress={() => navigation.navigate('DetailPage', { recipe: recipe, user: user, indexRecipe: (1 + index + rowIndex * 2) })}
+              />
+            ))}
+          </View>
+        ))}
       </ScrollView>
     </View>
     

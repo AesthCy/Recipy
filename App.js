@@ -1,6 +1,6 @@
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { Login, Signup, Welcome, Homepage, DetailPizza, DetailSpaghetti, DetailMasala, DetailKungPao, DetailPadThai, DetailRamen } from './screens';
+import { Login, Signup, Welcome, Homepage, DetailPage } from './screens';
 
 const stack = createNativeStackNavigator()
 export default function App() {
@@ -32,38 +32,8 @@ export default function App() {
         </stack.Screen>
 
         <stack.Screen
-          name='DetailPizza'
-          component={DetailPizza}
-          options={{headerShown:false}}>
-        </stack.Screen>
-
-        <stack.Screen
-          name='DetailSpaghetti'
-          component={DetailSpaghetti}
-          options={{headerShown:false}}>
-        </stack.Screen>
-
-        <stack.Screen
-          name='DetailMasala'
-          component={DetailMasala}
-          options={{headerShown:false}}>
-        </stack.Screen>
-
-        <stack.Screen
-          name='DetailKungPao'
-          component={DetailKungPao}
-          options={{headerShown:false}}>
-        </stack.Screen>
-
-        <stack.Screen
-          name='DetailPadThai'
-          component={DetailPadThai}
-          options={{headerShown:false}}>
-        </stack.Screen>
-
-        <stack.Screen
-          name='DetailRamen'
-          component={DetailRamen}
+          name='DetailPage'
+          component={DetailPage}
           options={{headerShown:false}}>
         </stack.Screen>
       </stack.Navigator>
