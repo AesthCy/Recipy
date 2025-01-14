@@ -12,6 +12,7 @@ const Homepage = () => {
   const { user } = route.params;
   const [userData, setUserData] = useState(null); // State to store user data
   const [recipes, setRecipes] = useState([]); // Simpan data resep
+  const [supermarkets, setSupermarkets] = useState([]); // Simpan data supermarket
   const [loading, setLoading] = useState(true); // Loading state
 
   const navigation = useNavigation();
@@ -67,10 +68,29 @@ const Homepage = () => {
       }
     };
 
+    // Fungsi untuk mengambil data pengguna
+    const fetchSupermarket = async () => {
+      try {
+        const supermarketRef = ref(database, 'supermarkets');
+        const snapshot = await get(supermarketRef);
+
+        if (snapshot.exists()) {
+          setSupermarkets(snapshot.val());
+        } else {
+          console.log("No data available for this user.");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     const fetchData = async () => {
       setLoading(true);
       await fetchUserData();
       await fetchRecipes();
+      await fetchSupermarket();
       setLoading(false);
     };
 
@@ -81,7 +101,6 @@ const Homepage = () => {
 
   const RecipeCard = ({ recipe, onPress }) => {
     if (!recipe) return null;
-
     return (
       <TouchableWithoutFeedback onPress={onPress}>
         <View className="flex-1 h-80 rounded-3xl mx-2 border-white bg-white">
@@ -151,6 +170,44 @@ const Homepage = () => {
       </TouchableWithoutFeedback>
     );
   }
+
+  const SupermarketCard = ({ supermarket, onPress }) => {
+    return (
+      <TouchableWithoutFeedback onPress={onPress}>
+        <View className="flex-1 h-80 rounded-3xl mx-2 my-2 border-white bg-white">
+          <Image
+            source={{ uri: supermarket.source }}
+            style={{
+              width: '100%',
+              borderRadius: 20,
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
+              flex: 1
+            }}
+          />
+    
+          <View className="flex-1 w-full p-2 justify-center">
+            <View className="flex-row flex-1 justify-start items-center">
+              <Text 
+                className="flex-1 text-2xl font-bold"
+                numberOfLines={1}
+                ellipsizeMode='tail'>
+                {supermarket.name}
+              </Text>
+            </View>
+            
+            <Text className="flex-1 text-md font-light">
+              {supermarket.address}
+            </Text>
+
+            <Text className="flex-1 text-md font-light">
+              {`Open: ${supermarket.operatingHours[new Date().toLocaleString('en-US', { weekday: 'long' })]?.open} - ${supermarket.operatingHours[new Date().toLocaleString('en-US', { weekday: 'long' })]?.close}`}
+            </Text>
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
+    );
+  };  
 
   if (loading) {
     return (
@@ -276,7 +333,7 @@ const Homepage = () => {
             </TouchableOpacity>
           </ScrollView>
         </View>
-        
+
         <Text className="text-black text-lg mt-4 px-2">
           Your Progress
         </Text>
@@ -297,6 +354,18 @@ const Homepage = () => {
               />
             ))}
           </View>
+        ))}
+
+        <Text className="text-black text-lg mt-4 px-2">
+          Looking for Supermarkets?
+        </Text>
+
+        {supermarkets.map((supermarket, index) => (
+          <SupermarketCard
+            key={index}
+            supermarket={supermarket}
+            onPress={() => navigation.navigate('SupermarketPage', { user: user, index: index })}
+          />
         ))}
       </ScrollView>
     </View>

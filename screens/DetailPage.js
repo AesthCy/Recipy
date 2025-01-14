@@ -173,6 +173,17 @@ const Detail = () => {
             ))}
           </View>
 
+          <TouchableOpacity
+            onPress={() => navigation.navigate('SupermarketPage', {user: user, index: 0})}
+            style={{
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <Text className="mt-4 mb-2 px-2 py-2 text-xl font-bold underline">Buy these ingredients needed here!</Text>
+          </TouchableOpacity>
+
+
           {/* Progress Bar */}
           <View className="flex-1 justify-center items-center p-5 mt-4 bg-gray-100">
             <Progress.Bar
@@ -184,7 +195,7 @@ const Detail = () => {
             />
             <Text className="text-base text-gray-500">{`Progress: ${currentStep + 1} of ${recipe.steps.length}`}</Text>
           </View>
-
+          
           {/* Step-by-Step Card */}
           <View className="flex-1 justify-center items-center bg-red-100">
             {isInitialized ? (

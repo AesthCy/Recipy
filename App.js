@@ -1,6 +1,6 @@
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { Login, Signup, Welcome, Homepage, DetailPage } from './screens';
+import { Login, Signup, Welcome, Homepage, DetailPage, SupermarketPage } from './screens';
 
 const stack = createNativeStackNavigator()
 export default function App() {
@@ -34,6 +34,12 @@ export default function App() {
         <stack.Screen
           name='DetailPage'
           component={DetailPage}
+          options={{headerShown:false}}>
+        </stack.Screen>
+
+        <stack.Screen
+          name='SupermarketPage'
+          component={SupermarketPage}
           options={{headerShown:false}}>
         </stack.Screen>
       </stack.Navigator>

@@ -114,7 +114,7 @@ const Login = () => {
               </Text>
 
               <TextInput
-                className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl p-4"
+                className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl px-4"
                 placeholder='Email'
                 placeholderTextColor="#A9A9A9"
                 keyboardType='email-address'
@@ -128,7 +128,7 @@ const Login = () => {
               </Text>
 
               <TextInput
-                className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl p-4"
+                className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl px-4"
                 placeholder='Password'
                 placeholderTextColor="#A9A9A9"
                 secureTextEntry={true}
@@ -141,7 +141,7 @@ const Login = () => {
               ) : null}
 
               <TouchableOpacity className="my-4 w-96 items-end">
-                <Text>
+                <Text className="underline">
                   Forgot Password?
                 </Text>
               </TouchableOpacity>

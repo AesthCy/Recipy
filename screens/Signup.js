@@ -123,7 +123,7 @@ const Signup = () => {
               </Text>
 
               <TextInput
-                className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl p-4"
+                className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl px-4"
                 placeholder='Username'
                 placeholderTextColor="#A9A9A9"
                 value={username}
@@ -135,7 +135,7 @@ const Signup = () => {
               </Text>
 
               <TextInput
-                className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl p-4"
+                className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl px-4"
                 placeholder='Email'
                 placeholderTextColor="#A9A9A9"
                 keyboardType='email-address'
@@ -149,7 +149,7 @@ const Signup = () => {
               </Text>
 
               <TextInput
-                className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl p-4"
+                className="w-96 h-12 my-1 border-gray-300 border-2 rounded-xl px-4"
                 placeholder='Password'
                 placeholderTextColor="#A9A9A9"
                 secureTextEntry={true}
